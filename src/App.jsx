@@ -22,14 +22,6 @@ function makeConversation() {
   return { id: crypto.randomUUID(), title: 'New conversation', updatedAt: Date.now(), messages: [] };
 }
 
-function makeReply(prompt) {
-  const lower = prompt.toLowerCase();
-  if (lower.includes('hello') || lower.includes('hi')) return "Hey! I'm NHK AI. What would you like to work on today?";
-  if (lower.includes('code') || lower.includes('website') || lower.includes('app')) return "Absolutely — let's build it step by step. Tell me what the app should do, who it's for, and which parts matter most. I can help plan the structure and write the code.";
-  if (lower.includes('explain') || lower.includes('understand')) return "Of course. I can break the topic into simple steps, explain the key ideas, and give you an example. Which part should we start with?";
-  return "Thanks for your message! The NHK AI interface is running. To get real AI answers, the next step is connecting a secure server-side AI provider. Your conversation is saved in this browser, so you can keep testing the workspace in the meantime.";
-}
-
 export default function App() {
   const [conversations, setConversations] = useState(readConversations);
   const [activeId, setActiveId] = useState(() => readConversations()[0]?.id || null);
@@ -40,7 +32,9 @@ export default function App() {
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [mobileSidebar, setMobileSidebar] = useState(false);
   const [attachments, setAttachments] = useState([]);
-  const [copiedId, setCopiedId] = useState(null);\n  const [isSending, setIsSending] = useState(false);
+  const [copiedId, setCopiedId] = useState(null);
+  const [isSending, setIsSending] = useState(false);
+  const [isSending, setIsSending] = useState(false);
   const endRef = useRef(null);
   const fileRef = useRef(null);
 
@@ -64,20 +58,54 @@ export default function App() {
     setMobileSidebar(false);
   }
 
-  function sendMessage(text = prompt) {
+  async function sendMessage(text = prompt) {
     const content = text.trim();
-    if (!content && attachments.length === 0) return;
+    if ((!content && attachments.length === 0) || isSending) return;
     const chat = active || makeConversation();
-    const userMessage = { id: crypto.randomUUID(), role: 'user', content: content || 'Please review the attached file(s).', files: attachments.map(f => f.name) };
-    const reply = { id: crypto.randomUUID(), role: 'assistant', content: makeReply(content || 'Review these files') };
+    const userMessage = {
+      id: crypto.randomUUID(),
+      role: 'user',
+      content: content || 'I selected a file, but file analysis is not enabled yet.',
+      files: attachments.map(file => file.name)
+    };
+    const history = [...chat.messages, userMessage];
+    const title = chat.messages.length ? chat.title : (content.slice(0, 34) || 'File discussion');
     setConversations(prev => {
-      const exists = prev.some(c => c.id === chat.id);
-      const updated = { ...chat, title: chat.messages.length ? chat.title : (content.slice(0, 34) || 'File discussion'), updatedAt: Date.now(), messages: [...chat.messages, userMessage, reply] };
-      return exists ? prev.map(c => c.id === chat.id ? updated : c) : [updated, ...prev];
+      const exists = prev.some(item => item.id === chat.id);
+      const updated = { ...chat, title, updatedAt: Date.now(), messages: history };
+      return exists ? prev.map(item => item.id === chat.id ? updated : item) : [updated, ...prev];
     });
     setActiveId(chat.id);
     setPrompt('');
     setAttachments([]);
+    setIsSending(true);
+    try {
+      const response = await fetch('/api/chat', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          style: model,
+          messages: history.slice(-20).map(({ role, content: messageContent }) => ({ role, content: messageContent }))
+        })
+      });
+      const data = await response.json().catch(() => ({}));
+      if (!response.ok) throw new Error(data.error || 'The AI server could not complete your request.');
+      const reply = { id: crypto.randomUUID(), role: 'assistant', content: data.reply };
+      setConversations(prev => prev.map(item => item.id === chat.id
+        ? { ...item, updatedAt: Date.now(), messages: [...item.messages, reply] }
+        : item));
+    } catch (error) {
+      const reply = {
+        id: crypto.randomUUID(),
+        role: 'assistant',
+        content: error.message || 'I could not connect to the NHK AI server. Make sure the backend is running and configured.'
+      };
+      setConversations(prev => prev.map(item => item.id === chat.id
+        ? { ...item, updatedAt: Date.now(), messages: [...item.messages, reply] }
+        : item));
+    } finally {
+      setIsSending(false);
+    }
   }
 
   function addFiles(event) {
@@ -153,7 +181,7 @@ export default function App() {
             <div className="messages-wrap">
               <div className="conversation-title"><span className="title-icon"><Sparkles size={17}/></span><div><h2>{active.title}</h2><p>Conversation · Saved in this browser</p></div></div>
               {active.messages.map(message => <article key={message.id} className={`message-row ${message.role}`}><div className={`message-avatar ${message.role}`}>{message.role === 'assistant' ? <Sparkles size={16}/> : 'N'}</div><div className="message-content"><div className="message-author">{message.role === 'assistant' ? 'NHK AI' : 'You'}</div><p>{message.content}</p>{message.files?.length > 0 && <div className="attached-list">{message.files.map(name => <span key={name}><FileText size={13}/>{name}</span>)}</div>}{message.role === 'assistant' && <button className="copy-btn" onClick={() => copyMessage(message)}>{copiedId === message.id ? <Check size={13}/> : <Command size={13}/>} {copiedId === message.id ? 'Copied' : 'Copy'}</button>}</div></article>)}
-              {isSending && <div className="message-row assistant"><div className="message-avatar assistant"><Sparkles size={16}/></div><div className="message-content"><div className="message-author">NHK AI</div><p className="typing-indicator">Thinking…</p></div></div>}<div ref={endRef}/>
+              {isSending && <div className="message-row assistant"><div className="message-avatar assistant"><Sparkles size={16}/></div><div className="message-content"><div className="message-author">NHK AI</div><p className="typing-indicator">Thinking…</p></div></div>}{isSending && <div className="message-row assistant"><div className="message-avatar assistant"><Sparkles size={16}/></div><div className="message-content"><div className="message-author">NHK AI</div><p className="typing-indicator">Thinking…</p></div></div>}<div ref={endRef}/>
             </div>
           )}
         </section>
