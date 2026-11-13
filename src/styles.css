@@ -83,3 +83,5 @@
 .widget-toggle input{accent-color:#a77bff;width:15px;height:15px}
 @media(max-width:900px){.clock-card,.weather-card,.tasks-card,.calendar-card,.notes-card,.projects-card{grid-column:span 12}.command-content{padding-top:25px}.command-grid{gap:11px}}
 @media(max-width:760px){.command-sidebar{display:none}.command-topbar{padding:0 15px}.command-heading{align-items:flex-start}.command-heading h1{font-size:30px}.customize-btn{padding:8px 9px;font-size:9px}.command-footer{flex-wrap:wrap}}
+
+.command-chat-link{display:flex;align-items:center;gap:7px;border:1px solid #a77bff35;background:#a77bff12;color:#cdb5f2;border-radius:8px;padding:8px 10px;font-size:10px}.command-chat-link:hover{background:#a77bff22}@media(max-width:760px){.command-chat-link{padding:7px;font-size:0}.command-chat-link svg{width:16px;height:16px}}
