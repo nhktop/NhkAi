@@ -56,3 +56,8 @@ Provider requests use `store: false`.
 
 File selection in the current UI is only a local attachment preview; file
 contents are not uploaded to or analyzed by the AI yet.
+
+
+## NHK Command Center
+
+The home screen is a personal dashboard with a live local clock, current weather (Open-Meteo), task list, month calendar, autosaved quick notes, and project cards. Use **Customize** to show or hide widgets. Dashboard data is saved in this browser's local storage. Weather location can be changed in the weather card.
