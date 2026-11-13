@@ -1,3 +1,4 @@
+import CommandCenter from './CommandCenter';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import {
   ArrowDown, ArrowUp, AudioLines, Bot, Check, ChevronDown, Command,
@@ -34,6 +35,7 @@ export default function App() {
   const [attachments, setAttachments] = useState([]);
   const [copiedId, setCopiedId] = useState(null);
   const [isSending, setIsSending] = useState(false);
+  const [page, setPage] = useState('dashboard');
   const endRef = useRef(null);
   const fileRef = useRef(null);
 
@@ -49,6 +51,7 @@ export default function App() {
   useEffect(() => { endRef.current?.scrollIntoView({ behavior: 'smooth' }); }, [active?.messages.length]);
 
   function newChat() {
+    setPage('chat');
     const chat = makeConversation();
     setConversations(prev => [chat, ...prev]);
     setActiveId(chat.id);
@@ -123,6 +126,8 @@ export default function App() {
     try { await navigator.clipboard.writeText(message.content); setCopiedId(message.id); setTimeout(() => setCopiedId(null), 1500); } catch {}
   }
 
+  if (page === 'dashboard') return <CommandCenter onOpenChat={() => setPage('chat')} />;
+
   return (
     <div className="app-shell">
       <aside className={`sidebar ${mobileSidebar ? 'sidebar-open' : ''}`}>
@@ -134,7 +139,7 @@ export default function App() {
         <button className="new-chat-btn" onClick={newChat}><SquarePen size={17}/> <span>New chat</span><kbd>⌘ K</kbd></button>
         <div className="side-search"><Search size={15}/><input value={search} onChange={e => setSearch(e.target.value)} placeholder="Search conversations"/></div>
         <div className="side-label">WORKSPACE</div>
-        <button className="nav-item active"><MessageSquare size={16}/> All conversations</button>
+        <button className="nav-item" onClick={() => setPage('dashboard')}><Sparkles size={16}/> Command Center</button><button className="nav-item active"><MessageSquare size={16}/> All conversations</button>
         <button className="nav-item" onClick={() => setSettingsOpen(true)}><Settings2 size={16}/> Preferences</button>
         <div className="history-head"><span className="side-label">RECENT</span><button className="tiny-icon" onClick={newChat}><Plus size={15}/></button></div>
         <div className="conversation-list">
