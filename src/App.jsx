@@ -40,7 +40,7 @@ export default function App() {
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [mobileSidebar, setMobileSidebar] = useState(false);
   const [attachments, setAttachments] = useState([]);
-  const [copiedId, setCopiedId] = useState(null);
+  const [copiedId, setCopiedId] = useState(null);\n  const [isSending, setIsSending] = useState(false);
   const endRef = useRef(null);
   const fileRef = useRef(null);
 
@@ -153,7 +153,7 @@ export default function App() {
             <div className="messages-wrap">
               <div className="conversation-title"><span className="title-icon"><Sparkles size={17}/></span><div><h2>{active.title}</h2><p>Conversation · Saved in this browser</p></div></div>
               {active.messages.map(message => <article key={message.id} className={`message-row ${message.role}`}><div className={`message-avatar ${message.role}`}>{message.role === 'assistant' ? <Sparkles size={16}/> : 'N'}</div><div className="message-content"><div className="message-author">{message.role === 'assistant' ? 'NHK AI' : 'You'}</div><p>{message.content}</p>{message.files?.length > 0 && <div className="attached-list">{message.files.map(name => <span key={name}><FileText size={13}/>{name}</span>)}</div>}{message.role === 'assistant' && <button className="copy-btn" onClick={() => copyMessage(message)}>{copiedId === message.id ? <Check size={13}/> : <Command size={13}/>} {copiedId === message.id ? 'Copied' : 'Copy'}</button>}</div></article>)}
-              <div ref={endRef}/>
+              {isSending && <div className="message-row assistant"><div className="message-avatar assistant"><Sparkles size={16}/></div><div className="message-content"><div className="message-author">NHK AI</div><p className="typing-indicator">Thinking…</p></div></div>}<div ref={endRef}/>
             </div>
           )}
         </section>
@@ -161,14 +161,14 @@ export default function App() {
         <footer className="composer-zone">
           <div className="composer">
             {attachments.length > 0 && <div className="attachment-chips">{attachments.map((file,i) => <span key={i}><FileText size={13}/>{file.name}<button onClick={() => setAttachments(prev => prev.filter((_,j) => j !== i))}><X size={12}/></button></span>)}</div>}
-            <textarea value={prompt} onChange={e => setPrompt(e.target.value)} onKeyDown={e => {if(e.key === 'Enter' && !e.shiftKey){e.preventDefault();sendMessage();}}} placeholder="Message NHK AI..." rows={1}/>
-            <div className="composer-tools"><div className="tool-left"><input ref={fileRef} type="file" multiple onChange={addFiles} hidden/><button className="tool-btn" onClick={() => fileRef.current?.click()}><Paperclip size={16}/> <span>Attach</span></button><span className="tool-divider"/><span className="composer-hint">Shift + Enter for new line</span></div><div className="tool-right"><button className="tool-btn voice-btn" title="Voice input is coming soon"><AudioLines size={17}/></button><button className="send-btn" onClick={() => sendMessage()} disabled={!prompt.trim() && attachments.length === 0} aria-label="Send message"><ArrowUp size={18}/></button></div></div>
+            <textarea value={prompt} disabled={isSending} onChange={e => setPrompt(e.target.value)} onKeyDown={e => {if(e.key === 'Enter' && !e.shiftKey){e.preventDefault();sendMessage();}}} placeholder="Message NHK AI..." rows={1}/>
+            <div className="composer-tools"><div className="tool-left"><input ref={fileRef} type="file" multiple onChange={addFiles} hidden/><button className="tool-btn" onClick={() => fileRef.current?.click()}><Paperclip size={16}/> <span>Attach</span></button><span className="tool-divider"/><span className="composer-hint">Shift + Enter for new line</span></div><div className="tool-right"><button className="tool-btn voice-btn" title="Voice input is coming soon"><AudioLines size={17}/></button><button className="send-btn" onClick={() => sendMessage()} disabled={isSending || (!prompt.trim() && attachments.length === 0)} aria-label="Send message">{isSending ? <span className="send-spinner"/> : <ArrowUp size={18}/>}</button></div></div>
           </div>
           <div className="disclaimer">NHK AI can make mistakes. Check important information. <span>·</span> Built for curious minds.</div>
         </footer>
       </main>
 
-      {settingsOpen && <div className="modal-backdrop" onClick={() => setSettingsOpen(false)}><section className="settings-modal" onClick={e => e.stopPropagation()}><div className="modal-head"><div><span className="modal-kicker">WORKSPACE</span><h2>Preferences</h2></div><button className="icon-btn" onClick={() => setSettingsOpen(false)}><X size={18}/></button></div><div className="setting-row"><div><strong>Default model</strong><small>Choose the assistant style for new chats.</small></div><select value={model} onChange={e => setModel(e.target.value)}><option>NHK Smart</option><option>NHK Creative</option><option>NHK Code</option></select></div><div className="setting-row"><div><strong>Conversation storage</strong><small>Chats are currently saved locally in this browser.</small></div><span className="status-pill"><span/> On device</span></div><div className="settings-info"><Sparkles size={16}/><p>Real AI provider connection is the next setup step. API keys will be kept on a secure server, never in the browser.</p></div><button className="modal-done" onClick={() => setSettingsOpen(false)}>Done</button></section></div>}
+      {settingsOpen && <div className="modal-backdrop" onClick={() => setSettingsOpen(false)}><section className="settings-modal" onClick={e => e.stopPropagation()}><div className="modal-head"><div><span className="modal-kicker">WORKSPACE</span><h2>Preferences</h2></div><button className="icon-btn" onClick={() => setSettingsOpen(false)}><X size={18}/></button></div><div className="setting-row"><div><strong>Default model</strong><small>Choose the assistant style for new chats.</small></div><select value={model} onChange={e => setModel(e.target.value)}><option>NHK Smart</option><option>NHK Creative</option><option>NHK Code</option></select></div><div className="setting-row"><div><strong>Conversation storage</strong><small>Chats are currently saved locally in this browser.</small></div><span className="status-pill"><span/> On device</span></div><div className="settings-info"><Sparkles size={16}/><p>AI requests are sent through the secure NHK AI server. Your API key stays on the server and is never sent to this browser.</p></div><button className="modal-done" onClick={() => setSettingsOpen(false)}>Done</button></section></div>}
     </div>
   );
 }
