@@ -34,7 +34,6 @@ export default function App() {
   const [attachments, setAttachments] = useState([]);
   const [copiedId, setCopiedId] = useState(null);
   const [isSending, setIsSending] = useState(false);
-  const [isSending, setIsSending] = useState(false);
   const endRef = useRef(null);
   const fileRef = useRef(null);
 
